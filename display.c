@@ -223,7 +223,7 @@ static void displaySocCounted1()
 static void displaySocCounted2()
 {
     strncpy(line0, "Aging As/hour?", 16);
-    snprintf(line1, 17, "%d", CountGetAgingAsPerHour());
+    snprintf(line1, 17, "%d", CountGetCurrentOffsetMa());
 }
 static void displayOutput0()
 {
@@ -353,9 +353,9 @@ static void adjustSetting(char increase, uint16_t amount)
                 case 2:
                 {
                     int16_t newValue;
-                    if (increase) newValue = CountGetAgingAsPerHour() + (int16_t)amount;
-                    else          newValue = CountGetAgingAsPerHour() - (int16_t)amount;
-                    CountSetAgingAsPerHour(newValue);
+                    if (increase) newValue = CountGetCurrentOffsetMa() + (int16_t)amount;
+                    else          newValue = CountGetCurrentOffsetMa() - (int16_t)amount;
+                    CountSetCurrentOffsetMa(newValue);
                     break;
                 }
             }

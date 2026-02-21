@@ -30,19 +30,15 @@
  
  Pulse interval at 150A is 61.444 / 150 = 409mS
  Pulse interval at 100mA is 61.444 / 0.1 = 614S
+ Current at 1 hour is 61.444 / 3600 = 17mA
  
  */
-#define MA_SECONDS_PER_PULSE 61444
-#define MINIMUM_PULSE_INTERVAL_MS 400UL
+#define MA_SECONDS_PER_PULSE 61444UL
 
 uint32_t PulseInterval     = 0;
 uint32_t PulseMsCount      = 0;
 char     PulsePolarity     = 1;
 char     PulsePolarityInst = 1;
-
-static uint32_t _maSecondsPerPulse       = 0; //Needs to be 32 bit in case > 65535
-static uint32_t _wholeAmpSecsPerPulse    = 0;
-static uint16_t _remainingMaSecsPerPulse = 0;
 
 uint32_t PulseGetAbsoluteCurrentMa()
 {
@@ -52,7 +48,7 @@ uint32_t PulseGetAbsoluteCurrentMa()
     
     uint32_t ma;
     if (pulseInterval < 20) ma = 999999; //For short intervals set current to an arbitrarily large number
-    else                    ma = (uint32_t)_maSecondsPerPulse * 1000 / pulseInterval;
+    else                    ma = MA_SECONDS_PER_PULSE * 1000 / pulseInterval;
     return ma;
 }
 int32_t PulseGetCurrentMa()
@@ -65,10 +61,7 @@ int32_t PulseGetCurrentMa()
 void PulseInit()
 {
     INTEDG0 = 0; //Interrupt on falling edge
-    INT0IF = 0;
-    _maSecondsPerPulse       = MA_SECONDS_PER_PULSE;
-    _wholeAmpSecsPerPulse    = _maSecondsPerPulse / 1000;
-    _remainingMaSecsPerPulse = (uint16_t)(_maSecondsPerPulse % 1000);
+    INT0IF = 0;  //Happens after 3 seconds so all spurious pulses are long gone
 }
 uint32_t PulseGetMsSinceLastPulse()
 {
@@ -77,47 +70,17 @@ uint32_t PulseGetMsSinceLastPulse()
 
 void PulseMain()
 {
-    static char    _isFirst = 1;
-    static int16_t _fraction = 0;
-    
     PulsePolarityInst = POL;
         
     if (INT0IF)
     {
         INT0IF = 0;
-        if (_isFirst)
-        {
-            _isFirst = 0;
-            return;
-        }
-        uint32_t count = MsTimerCount;
-        uint32_t interval = count - PulseMsCount;
-        if (interval < MINIMUM_PULSE_INTERVAL_MS) return; //Ignore spurious pulses
-        
         PulsePolarity = POL;
+        uint32_t lastPulseMs = PulseMsCount;
+        PulseMsCount = MsTimerCount;
+        if (lastPulseMs) PulseInterval = PulseMsCount - lastPulseMs;
         
-        char hadFraction = 0;
-        if (PulsePolarity)
-        {
-            _fraction += _remainingMaSecsPerPulse;
-            if (_fraction > 1000)
-            {
-                _fraction -= 1000;
-                hadFraction = 1;
-            }
-            CountAddAmpSecondsU(_wholeAmpSecsPerPulse + hadFraction);
-        }
-        else
-        {
-            _fraction -= _remainingMaSecsPerPulse;
-            if (_fraction < -1000)
-            {
-                _fraction += 1000;
-                hadFraction = 1;
-            }
-            CountSubAmpSecondsU(_wholeAmpSecsPerPulse + hadFraction);
-        }
-        PulseInterval = interval;
-        PulseMsCount = count;
+        if (PulsePolarity) CountAddMilliAmpSeconds(MA_SECONDS_PER_PULSE);
+        else               CountSubMilliAmpSeconds(MA_SECONDS_PER_PULSE);
     }
 }

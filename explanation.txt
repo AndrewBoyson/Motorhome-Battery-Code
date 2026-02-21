@@ -43,3 +43,18 @@ Suppose target is 50% or 140Ah
 Start charge when SoC falls below 50.0%
 Start discharge when SoC reaches 51.0%
 Start neutral when SoC reaches 50.9%
+
+
+Rounding towards zero after division
+====================================
+1 Amp second per hour == 1000 ma seconds per hour == 1000ma seconds per 3600 seconds == 1000 / 3600 mA
+so divide by 3.6. That won't work with integer so multiply by 10 and divide by 36.
+Want to round to nearest integer so add 0.5 to to result of division
+For positive mA multiply ma by 10,      add 18 (half of 36) then divide the result by 36.
+for negative mA multiply mA by 10, subtract 18 (half of 36) then divide the result by 36.
+ 
+Three corrections
+=================
+1. Zero mA offset from coulomb counter (measure current when neutral)
+2. Correct coulomb counter non linearity across polarity (see page 1 of https://www.analog.com/media/en/technical-documentation/data-sheets/4150fc.pdf)
+3. Calibrate coulomb count from mV (3290mV = 56%, 3300mV = 57%, 3310mV = 58%);

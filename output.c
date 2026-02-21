@@ -21,11 +21,16 @@
 #define STATE_CHARGE    1
 #define STATE_DISCHARGE 2
 
-char    _state = STATE_NEUTRAL;
-char    _allowed = 0;
-char    _chargeEnabled    = 0;
-char    _dischargeEnabled = 0;
-uint8_t _targetSoc      = 0;
+#define TARGET_MODE_VOLTAGE 0 //Home
+#define TARGET_MODE_SOC     1 //Away
+
+static char    _state            = STATE_NEUTRAL;
+static char    _allowed          = 0;
+static char    _chargeEnabled    = 0;
+static char    _dischargeEnabled = 0;
+static char    _targetMode       = 0;
+static uint8_t _targetSoc        = 0;
+static int16_t _targetMv         = 0;
 
 char OutputGetState()
 {
@@ -48,7 +53,9 @@ static void saveEnables()
 
 char    OutputGetChargeEnabled   () { return _chargeEnabled;    } void OutputSetChargeEnabled   (char    v) { _chargeEnabled    = v; saveEnables(); }
 char    OutputGetDischargeEnabled() { return _dischargeEnabled; } void OutputSetDischargeEnabled(char    v) { _dischargeEnabled = v; saveEnables(); }
-uint8_t OutputGetTargetSoc       () { return _targetSoc;        } void OutputSetTargetSoc       (uint8_t v) { _targetSoc        = v; EepromSaveU8(EEPROM_OUTPUT_TARGET_SOC_U8, _targetSoc); } 
+char    OutputGetTargetMode      () { return _targetMode;       } void OutputSetTargetMode      (char    v) { _targetMode       = v; EepromSaveChar(EEPROM_OUTPUT_TARGET_MODE_CHAR, _targetMode); }
+uint8_t OutputGetTargetSoc       () { return _targetSoc;        } void OutputSetTargetSoc       (uint8_t v) { _targetSoc        = v; EepromSaveU8  (EEPROM_OUTPUT_TARGET_SOC_U8   , _targetSoc ); } 
+int16_t OutputGetTargetMv        () { return _targetMv;         } void OutputSetTargetMv        (int16_t v) { _targetMv         = v; EepromSaveS16 (EEPROM_OUTPUT_TARGET_MV_S16   , _targetMv  ); } 
 
 void OutputInit()
 {
@@ -61,30 +68,60 @@ void OutputInit()
     uint8_t byte = EepromReadU8(EEPROM_OUTPUT_ENABLES_U8);
     _chargeEnabled    = byte & 2;
     _dischargeEnabled = byte & 1;
-    _targetSoc = EepromReadU8(EEPROM_OUTPUT_TARGET_SOC_U8);
+    _targetMode = EepromReadChar(EEPROM_OUTPUT_TARGET_MODE_CHAR);
+    _targetSoc  = EepromReadU8  (EEPROM_OUTPUT_TARGET_SOC_U8);
+    _targetMv   = EepromReadS16 (EEPROM_OUTPUT_TARGET_MV_S16);
 }
-
+#define CHARGE_DISCHARGE_HYSTERISIS_MV 32 //This must be smaller than VALID_VOLTAGE_SLOPE_MV or the state won't stay in neutral
+#define VALID_VOLTAGE_SLOPE_MV         40
 void OutputMain()
 {
-    uint32_t            socAmpSeconds = CountGetAmpSeconds();
-    uint32_t         targetAmpSeconds = (uint32_t)OutputGetTargetSoc() * 280 * 36;          //50.000
-    uint32_t    chargeStartAmpSeconds = targetAmpSeconds - (uint32_t)4999 * 28 * 36 / 1000; //49.501 = 50 - 0.499% 
-    uint32_t dischargeStartAmpSeconds = targetAmpSeconds + (uint32_t)4999 * 28 * 36 / 1000; //50.499 = 50 + 0.499%
-
-    switch (_state)
+    if (_targetMode == TARGET_MODE_SOC)
     {
-        case STATE_NEUTRAL:
-            if (socAmpSeconds >= dischargeStartAmpSeconds) _state = STATE_DISCHARGE; //Drifts up to 50.499% but in practice only here if the target is changed
-            if (socAmpSeconds <=    chargeStartAmpSeconds) _state = STATE_CHARGE;    //Drifts down to 49.501%
-            break;
-        case STATE_CHARGE:
-            if (socAmpSeconds >=         targetAmpSeconds) _state = STATE_NEUTRAL; //Charges to 50.000%
-            break;
-        case STATE_DISCHARGE:
-            if (socAmpSeconds <=         targetAmpSeconds) _state = STATE_NEUTRAL; //Discharges to 50.000%
-            break;
-    }
+        uint32_t            socAmpSeconds = CountGetAmpSeconds();
+        uint32_t         targetAmpSeconds = (uint32_t)OutputGetTargetSoc() * 280 * 36;          //50.000
+        uint32_t    chargeStartAmpSeconds = targetAmpSeconds - (uint32_t)4999 * 28 * 36 / 1000; //49.501 = 50 - 0.499% 
+        uint32_t dischargeStartAmpSeconds = targetAmpSeconds + (uint32_t)4999 * 28 * 36 / 1000; //50.499 = 50 + 0.499%
 
+        switch (_state)
+        {
+            case STATE_NEUTRAL:
+                if (socAmpSeconds >= dischargeStartAmpSeconds) _state = STATE_DISCHARGE; //Drifts up to 50.499% but in practice only here if the target is changed
+                if (socAmpSeconds <=    chargeStartAmpSeconds) _state = STATE_CHARGE;    //Drifts down to 49.501%
+                break;
+            case STATE_CHARGE:
+                if (socAmpSeconds >=         targetAmpSeconds) _state = STATE_NEUTRAL; //Charges to 50.000%
+                break;
+            case STATE_DISCHARGE:
+                if (socAmpSeconds <=         targetAmpSeconds) _state = STATE_NEUTRAL; //Discharges to 50.000%
+                break;
+        }
+    }
+    else if (_targetMode == TARGET_MODE_VOLTAGE)
+    {
+        int16_t               mV = VoltageGetAsMv();
+        int16_t         targetMv = OutputGetTargetMv() * 4;                     //3300
+
+        switch (_state)
+        {
+            case STATE_NEUTRAL:
+                if (mV >= targetMv + VALID_VOLTAGE_SLOPE_MV        ) _state = STATE_DISCHARGE; //Drifts up to 3310 but in practice only here if the target is changed
+                if (mV <= targetMv - VALID_VOLTAGE_SLOPE_MV        ) _state = STATE_CHARGE;    //Drifts down to 3290
+                break;
+            case STATE_CHARGE:
+                if (mV >= targetMv + CHARGE_DISCHARGE_HYSTERISIS_MV) _state = STATE_NEUTRAL;   //Charges to 3300
+                break;
+            case STATE_DISCHARGE:
+                if (mV <= targetMv - CHARGE_DISCHARGE_HYSTERISIS_MV) _state = STATE_NEUTRAL;   //Discharges to 3300
+                break;
+        }
+        
+    }
+    else
+    {
+        _state = STATE_NEUTRAL;
+    }
+    
     switch (_state)
     {
         case STATE_NEUTRAL:

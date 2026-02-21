@@ -1,15 +1,15 @@
 #include <stdint.h>
 
-extern  int16_t CountGetAgingAsPerHour(void);
-extern  void    CountSetAgingAsPerHour(int16_t v);
+extern  int16_t CountGetCurrentOffsetMa(void);
+extern  void    CountSetCurrentOffsetMa(int16_t v);
 
 extern uint16_t CountGetMinutesSinceLastSet(void);
 
 extern uint32_t CountGetAmpSeconds(void);
 extern void     CountSetAmpSeconds(uint32_t v);
-extern void     CountAddAmpSecondsU(uint32_t v);
-extern void     CountSubAmpSecondsU(uint32_t v);
-extern void     CountAddAmpSeconds(int32_t v);
+extern void     CountAddMilliAmpSeconds(uint32_t v);
+extern void     CountSubMilliAmpSeconds(uint32_t v);
+//extern void     CountAddAmpSeconds(int32_t v);
 
 extern uint16_t CountGetAmpHours(void);
 extern void     CountSetAmpHours(uint16_t v);

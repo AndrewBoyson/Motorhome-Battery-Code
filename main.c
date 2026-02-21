@@ -19,6 +19,7 @@
 #include "can-this.h"
 #include "eeprom-this.h"
 #include "i2c-this.h"
+#include "manage.h"
 
 #define _XTAL_FREQ 8000000
 
@@ -52,6 +53,7 @@ void main(void)
     DisplayInit();
     CanInit();
     CanThisInit();
+    ManageInit();
     
     ei();
     PEIE = 1; //Enable peripheral interrupts - specifically Timer 1 and ADC
@@ -69,5 +71,6 @@ void main(void)
         DisplayMain();
         CanMain();
         CanThisMain();
+        ManageMain();
     }
 }
