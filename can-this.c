@@ -29,6 +29,7 @@ static void receive(uint16_t id, uint8_t length, void* pData)
         case CAN_ID_BATTERY + CAN_ID_OUTPUT_TARGET_MODE:  OutputSetTargetMode           (*(    char*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_OUTPUT_TARGET_MV:    OutputSetTargetMv             (*( int16_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_VOLTAGE_SETTLE_MINS: ManageSetVoltageSettleTimeMins(*(uint16_t*)pData); break;
+        case CAN_ID_BATTERY + CAN_ID_VOLTAGE_REBOUND_MV:  OutputSetReboundMv            (*(  int8_t*)pData); break;
     }
 }
 
@@ -59,4 +60,5 @@ void CanThisMain(void)
     {  int16_t value = OutputGetTargetMv             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_OUTPUT_TARGET_MV   , sizeof(value), &value); }
     { uint32_t value = ManageGetMsAtRest             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MS_AT_REST         , sizeof(value), &value); }
     { uint16_t value = ManageGetVoltageSettleTimeMins(); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_VOLTAGE_SETTLE_MINS, sizeof(value), &value); }
+    {   int8_t value = OutputGetReboundMv            (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_VOLTAGE_REBOUND_MV , sizeof(value), &value); }
 }

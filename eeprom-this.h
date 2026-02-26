@@ -1,11 +1,11 @@
 
 #define EEPROM_COUNT_SOC_U8                        0 //1
 #define EEPROM_MANAGE_VOLTAGE_SETTLE_TIME_MINS_U16 1 //2
-#define EEPROM_OUTPUT_TARGET_MODE_CHAR             3 //1 Spare
+#define EEPROM_OUTPUT_TARGET_MODE_CHAR             3 //1
 #define EEPROM_OUTPUT_ENABLES_U8                   4 //1
-#define EEPROM_OUTPUT_TARGET_MV_S16                5 //2 Spare
+#define EEPROM_OUTPUT_TARGET_MV_S16                5 //2
 #define EEPROM_SPARE_7_S16                         7 //2 Spare
-#define EEPROM_SPARE_9_U8                          9 //1 Spare
+#define EEPROM_OUTPUT_REBOUND_MV_S8                9 //1
 #define EEPROM_SPARE_10_U8                        10 //1 Spare
 #define EEPROM_DISPLAY_ON_TIME_U8                 11 //1
 #define EEPROM_OUTPUT_TARGET_SOC_U8               12 //1

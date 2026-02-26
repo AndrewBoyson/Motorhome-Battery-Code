@@ -9,6 +9,7 @@
 #include "temperature.h"
 #include "eeprom-this.h"
 #include "voltage.h"
+#include "manage.h"
 
 #define CHARGE     LATBbits.LB5
 #define SUPPLY_OFF LATCbits.LC7
@@ -31,6 +32,7 @@ static char    _dischargeEnabled = 0;
 static char    _targetMode       = 0;
 static uint8_t _targetSoc        = 0;
 static int16_t _targetMv         = 0;
+static int8_t  _reboundMv        = 0;
 
 char OutputGetState()
 {
@@ -56,6 +58,7 @@ char    OutputGetDischargeEnabled() { return _dischargeEnabled; } void OutputSet
 char    OutputGetTargetMode      () { return _targetMode;       } void OutputSetTargetMode      (char    v) { _targetMode       = v; EepromSaveChar(EEPROM_OUTPUT_TARGET_MODE_CHAR, _targetMode); }
 uint8_t OutputGetTargetSoc       () { return _targetSoc;        } void OutputSetTargetSoc       (uint8_t v) { _targetSoc        = v; EepromSaveU8  (EEPROM_OUTPUT_TARGET_SOC_U8   , _targetSoc ); } 
 int16_t OutputGetTargetMv        () { return _targetMv;         } void OutputSetTargetMv        (int16_t v) { _targetMv         = v; EepromSaveS16 (EEPROM_OUTPUT_TARGET_MV_S16   , _targetMv  ); } 
+int8_t  OutputGetReboundMv       () { return _reboundMv;        } void OutputSetReboundMv       (int8_t  v) { _reboundMv        = v; EepromSaveS8  (EEPROM_OUTPUT_REBOUND_MV_S8   , _reboundMv ); } 
 
 void OutputInit()
 {
@@ -72,8 +75,7 @@ void OutputInit()
     _targetSoc  = EepromReadU8  (EEPROM_OUTPUT_TARGET_SOC_U8);
     _targetMv   = EepromReadS16 (EEPROM_OUTPUT_TARGET_MV_S16);
 }
-#define CHARGE_DISCHARGE_HYSTERISIS_MV 32 //This must be smaller than VALID_VOLTAGE_SLOPE_MV or the state won't stay in neutral
-#define VALID_VOLTAGE_SLOPE_MV         40
+
 void OutputMain()
 {
     if (_targetMode == TARGET_MODE_SOC)
@@ -99,20 +101,22 @@ void OutputMain()
     }
     else if (_targetMode == TARGET_MODE_VOLTAGE)
     {
-        int16_t               mV = VoltageGetAsMv();
-        int16_t         targetMv = OutputGetTargetMv() * 4;                     //3300
+        int16_t            actualBatMv = VoltageGetAsMv();
+        int16_t            targetBatMv = _targetMv * 4;                    //3300
+        int16_t validVoltageSlopeBatMv = ManageGetValidInflectionMv() * 4; //This is the width over which the capacity can be calibrated in manage.c == 15 * 4 mV
+        int16_t           reboundbatMv = _reboundMv * 4;                   //This must be smaller than VALID_VOLTAGE_SLOPE_MV or the state won't stay in neutral
 
         switch (_state)
         {
             case STATE_NEUTRAL:
-                if (mV >= targetMv + VALID_VOLTAGE_SLOPE_MV        ) _state = STATE_DISCHARGE; //Drifts up to 3310 but in practice only here if the target is changed
-                if (mV <= targetMv - VALID_VOLTAGE_SLOPE_MV        ) _state = STATE_CHARGE;    //Drifts down to 3290
+                if (actualBatMv >= targetBatMv + validVoltageSlopeBatMv) _state = STATE_DISCHARGE; //Drifts up to 3315 but in practice only here if the target is changed
+                if (actualBatMv <= targetBatMv - validVoltageSlopeBatMv) _state = STATE_CHARGE;    //Drifts down to 3285
                 break;
             case STATE_CHARGE:
-                if (mV >= targetMv + CHARGE_DISCHARGE_HYSTERISIS_MV) _state = STATE_NEUTRAL;   //Charges to 3300
+                if (actualBatMv >= targetBatMv + reboundbatMv          ) _state = STATE_NEUTRAL;   //Charges to 3310
                 break;
             case STATE_DISCHARGE:
-                if (mV <= targetMv - CHARGE_DISCHARGE_HYSTERISIS_MV) _state = STATE_NEUTRAL;   //Discharges to 3300
+                if (actualBatMv <= targetBatMv - reboundbatMv          ) _state = STATE_NEUTRAL;   //Discharges to 3290
                 break;
         }
         

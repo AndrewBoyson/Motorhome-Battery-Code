@@ -3,13 +3,13 @@
 extern  int16_t CountGetCurrentOffsetMa(void);
 extern  void    CountSetCurrentOffsetMa(int16_t v);
 
-extern uint16_t CountGetMinutesSinceLastSet(void);
+extern uint32_t CountGetMilliAmpSeconds(void);
+extern void     CountSetMilliAmpSeconds(uint32_t v);
+extern void     CountAddMilliAmpSeconds(uint32_t v);
+extern void     CountSubMilliAmpSeconds(uint32_t v);
 
 extern uint32_t CountGetAmpSeconds(void);
 extern void     CountSetAmpSeconds(uint32_t v);
-extern void     CountAddMilliAmpSeconds(uint32_t v);
-extern void     CountSubMilliAmpSeconds(uint32_t v);
-//extern void     CountAddAmpSeconds(int32_t v);
 
 extern uint16_t CountGetAmpHours(void);
 extern void     CountSetAmpHours(uint16_t v);

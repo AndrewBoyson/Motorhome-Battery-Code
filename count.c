@@ -11,7 +11,7 @@
 static uint32_t _capacityMilliAmpSeconds   = 0; //280Ah is 280 * 1000 * 3600 == 3C14 DC00. Could hold up to 1193Ah
 static uint32_t _milliAmpSeconds           = 0; //
 static uint8_t  _lastSavedSoc0to255        = 0; //Used to save count across resets. Updated in CountMain
-static  int16_t _currentOffsetMa            = 0;
+static  int16_t _currentOffsetMa           = 0;
 
 void CountInit()
 {
@@ -26,6 +26,9 @@ void    CountSetCurrentOffsetMa( int16_t v) {        _currentOffsetMa = v; Eepro
 
 uint32_t CountGetAmpSeconds()           { return _milliAmpSeconds     / 1000; }
 void     CountSetAmpSeconds(uint32_t v) {        _milliAmpSeconds = v * 1000; }
+
+uint32_t CountGetMilliAmpSeconds()           { return _milliAmpSeconds; }
+void     CountSetMilliAmpSeconds(uint32_t v) {        _milliAmpSeconds = v; }
 void     CountAddMilliAmpSeconds(uint32_t v)
 {
     if (_milliAmpSeconds < (_capacityMilliAmpSeconds - v)) _milliAmpSeconds += v;
@@ -36,8 +39,8 @@ void     CountSubMilliAmpSeconds(uint32_t v)
     if (_milliAmpSeconds > v) _milliAmpSeconds -= v;
     else                      _milliAmpSeconds  = 0;
 }
-uint16_t CountGetAmpHours()             { return (uint16_t)(_milliAmpSeconds     / 3600000ULL); }
-void     CountSetAmpHours(uint16_t v)   {                   _milliAmpSeconds = v * 3600000ULL ; }
+uint16_t CountGetAmpHours()             { return (uint16_t)(_milliAmpSeconds     / 3600000); }
+void     CountSetAmpHours(uint16_t v)   {                   _milliAmpSeconds = v * 3600000 ; }
 /*
   0% = -0.5 to   0.4999%
   1% =  0.5 to   1.4999%
