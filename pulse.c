@@ -80,7 +80,15 @@ void PulseMain()
         PulseMsCount = MsTimerCount;
         if (lastPulseMs) PulseInterval = PulseMsCount - lastPulseMs;
         
-        if (PulsePolarity) CountAddMilliAmpSeconds(MA_SECONDS_PER_PULSE);
-        else               CountSubMilliAmpSeconds(MA_SECONDS_PER_PULSE);
+        if (PulsePolarity)
+        {
+            CountAddMilliAmpSeconds(MA_SECONDS_PER_PULSE);
+            CountIncPosPulses();
+        }
+        else
+        {
+            CountSubMilliAmpSeconds(MA_SECONDS_PER_PULSE);
+            CountIncNegPulses();
+        }
     }
 }

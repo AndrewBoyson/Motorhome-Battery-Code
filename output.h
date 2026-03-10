@@ -9,3 +9,6 @@ extern char    OutputGetTargetMode      (void); extern void OutputSetTargetMode 
 
 extern void OutputInit(void);
 extern void OutputMain(void);
+
+#define OUTPUT_TARGET_MODE_VOLTAGE 0 //Home
+#define OUTPUT_TARGET_MODE_SOC     1 //Away

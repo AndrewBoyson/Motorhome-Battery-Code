@@ -25,6 +25,12 @@ extern void     CountSetSoc0to255(uint8_t v);
 extern uint32_t CountGetSoCmAh(void);
 extern void     CountSetSoCmAh(uint32_t v);
 
+extern uint16_t CountGetPosPulses(void);
+extern void     CountIncPosPulses(void);
+extern void     CountResPosPulses(void);
+extern uint16_t CountGetNegPulses(void);
+extern void     CountIncNegPulses(void);
+extern void     CountResNegPulses(void);
 
 extern void CountInit(void);
 extern void CountMain(void);

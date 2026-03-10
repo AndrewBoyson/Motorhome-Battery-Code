@@ -13,12 +13,24 @@ static uint32_t _milliAmpSeconds           = 0; //
 static uint8_t  _lastSavedSoc0to255        = 0; //Used to save count across resets. Updated in CountMain
 static  int16_t _currentOffsetMa           = 0;
 
+static uint16_t _positivePulses   = 0;
+static uint16_t _negativePulses   = 0;
+
+static uint16_t _lastSavedSoc = 0;
+static uint16_t _lastSavedPos = 0;
+static uint16_t _lastSavedNeg = 0;
+
 void CountInit()
 {
-    _lastSavedSoc0to255      = EepromReadU8(EEPROM_COUNT_SOC_U8);
     _capacityMilliAmpSeconds = BATTERY_CAPACITY_AH * 3600000;
-    _milliAmpSeconds         = _capacityMilliAmpSeconds / 256 * _lastSavedSoc0to255;
     _currentOffsetMa         = EepromReadS16(EEPROM_CURRENT_OFFSET_MA_S16);
+    
+    _lastSavedSoc = EepromReadU16(EEPROM_COUNT_SOC_MAS_U16);
+    _lastSavedPos = EepromReadU16(EEPROM_COUNT_POS_PULSES_U16);
+    _lastSavedNeg = EepromReadU16(EEPROM_COUNT_NEG_PULSES_U16);
+    _milliAmpSeconds         = (uint32_t)_lastSavedSoc << 16;
+    _positivePulses          = _lastSavedPos;
+    _negativePulses          = _lastSavedNeg;
 }
 
 int16_t CountGetCurrentOffsetMa()           { return _currentOffsetMa;}
@@ -62,12 +74,15 @@ void     CountSubSocPercent(uint8_t v)
     CountSubMilliAmpSeconds(toAdd);
 }
 
-uint8_t  CountGetSoc0to255()          { return (uint8_t)((_milliAmpSeconds + _capacityMilliAmpSeconds / 512) / (_capacityMilliAmpSeconds / 256)); }
-void     CountSetSoc0to255(uint8_t v) {                   _milliAmpSeconds = v                               * (_capacityMilliAmpSeconds / 256) ; }
-
 uint32_t CountGetSoCmAh()             { return _milliAmpSeconds     / 3600; }
 void     CountSetSoCmAh(uint32_t v)   {        _milliAmpSeconds = v * 3600; }
 
+uint16_t CountGetPosPulses() { return _positivePulses;     }
+void     CountIncPosPulses() {        _positivePulses++;   }
+void     CountResPosPulses() {        _positivePulses = 0; }
+uint16_t CountGetNegPulses() { return _negativePulses;     }
+void     CountIncNegPulses() {        _negativePulses++;   }
+void     CountResNegPulses() {        _negativePulses = 0; }
 
 void CountMain()
 {
@@ -79,11 +94,24 @@ void CountMain()
         if (_currentOffsetMa < 0) CountSubMilliAmpSeconds((uint32_t)(-_currentOffsetMa));
     }
 
-    //Calculate Soc (0-255) and save if necessary
-    uint8_t thisSoc0to255 = CountGetSoc0to255();
-    if (thisSoc0to255 != _lastSavedSoc0to255)
+    //Save counts in case of reset but with at least a 5 minute gap to give a ten year eeprom life
+    static uint32_t _msTimerSaveSoc = 0;
+    static uint32_t _msTimerSavePos = 0;
+    static uint32_t _msTimerSaveNeg = 0;
+    uint16_t thisSoc = (uint16_t)(        _milliAmpSeconds >> 16);
+    if (thisSoc != _lastSavedSoc && MsTimerRepetitive(&_msTimerSaveSoc, 5UL * 60 * 1000))
     {
-        _lastSavedSoc0to255 = thisSoc0to255;
-        EepromSaveU8(EEPROM_COUNT_SOC_U8, _lastSavedSoc0to255); //This limits the number of writes to eeprom while still being good enough
+        EepromSaveU16(EEPROM_COUNT_SOC_MAS_U16, thisSoc);
+        _lastSavedSoc = thisSoc;
+    }
+    if (_positivePulses != _lastSavedPos && MsTimerRepetitive(&_msTimerSavePos, 5UL * 60 * 1000))
+    {
+        EepromSaveU16(EEPROM_COUNT_POS_PULSES_U16, _positivePulses);
+        _lastSavedPos = _positivePulses;
+    }
+    if (_negativePulses != _lastSavedNeg && MsTimerRepetitive(&_msTimerSaveNeg, 5UL * 60 * 1000))
+    {
+        EepromSaveU16(EEPROM_COUNT_NEG_PULSES_U16, _negativePulses);
+        _lastSavedNeg = _negativePulses;
     }
 }

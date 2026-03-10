@@ -117,4 +117,15 @@ void ManageMain()
 
     zeroCurrent                (MsTimerRelative(_msTimerRest,       1UL*60*60*1000));
     calibrateChargeFromVoltage (MsTimerRelative(_msTimerRest, _voltageSettleTimeMs));
+    
+    
+    //Reset the pulse counts when target becomes SoC
+    static char _wasTargetSoc = 1; //Initialise as true to prevent reseting the pulse counts after a reset
+    char isTargetSoc = OutputGetTargetMode() == OUTPUT_TARGET_MODE_SOC;
+    if (isTargetSoc && !_wasTargetSoc)
+    {
+        CountResPosPulses();
+        CountResNegPulses();
+    }
+    _wasTargetSoc = isTargetSoc;
 }

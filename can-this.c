@@ -40,6 +40,8 @@ void CanThisInit(void)
 void CanThisMain(void)
 {
     { uint32_t value = CountGetAmpSeconds            (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNTED_AMP_SECONDS, sizeof(value), &value); }
+    { uint16_t value = CountGetPosPulses             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNT_POS_PULSES   , sizeof(value), &value); }
+    { uint16_t value = CountGetNegPulses             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNT_NEG_PULSES   , sizeof(value), &value); }
     {  int32_t value = PulseGetCurrentMa             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MA                 , sizeof(value), &value); }
     
     {  uint8_t value = OutputGetTargetSoc            (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_OUTPUT_TARGET_SOC  , sizeof(value), &value); }
@@ -61,4 +63,5 @@ void CanThisMain(void)
     { uint32_t value = ManageGetMsAtRest             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MS_AT_REST         , sizeof(value), &value); }
     { uint16_t value = ManageGetVoltageSettleTimeMins(); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_VOLTAGE_SETTLE_MINS, sizeof(value), &value); }
     {   int8_t value = OutputGetReboundMv            (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_VOLTAGE_REBOUND_MV , sizeof(value), &value); }
+    
 }
