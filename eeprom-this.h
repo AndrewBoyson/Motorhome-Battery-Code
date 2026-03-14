@@ -12,11 +12,12 @@
 #define EEPROM_SPARE_13_U8                        13 //1 Spare
 #define EEPROM_MS_TICK_COUNT_U16                  14 //2
 #define EEPROM_HEATER_TARGET_TENTHS_S16           16 //2
-#define EEPROM_SPARE_18_U8                        18 //1 Spare
-#define EEPROM_SPARE_19_U8                        19 //1 Spare
+#define EEPROM_MANAGE_DIFFERENCE_MAS_S16          18 //2
 #define EEPROM_HEATER_OUTPUT_OFFSET_S8            20 //1
 #define EEPROM_HEATER_KP_U16                      21 //2
 #define EEPROM_HEATER_KI_U16                      23 //2
 #define EEPROM_CURRENT_OFFSET_MA_S16              25 //2
 #define EEPROM_COUNT_POS_PULSES_U16               27 //2
 #define EEPROM_COUNT_NEG_PULSES_U16               29 //2
+#define EEPROM_MANAGE_PULSE_ADJUST_MAS_S16        31 //2
+#define EEPROM_MANAGE_REST_TIMER_MINUTES_U16      33 //2

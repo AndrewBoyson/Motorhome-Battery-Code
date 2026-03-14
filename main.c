@@ -19,7 +19,9 @@
 #include "can-this.h"
 #include "eeprom-this.h"
 #include "i2c-this.h"
-#include "manage.h"
+#include "rest.h"
+#include "cal-current.h"
+#include "cal-charge.h"
 
 #define _XTAL_FREQ 8000000
 
@@ -53,7 +55,9 @@ void main(void)
     DisplayInit();
     CanInit();
     CanThisInit();
-    ManageInit();
+    RestInit();
+    CalCurrentInit();
+    CalChargeInit();
     
     ei();
     PEIE = 1; //Enable peripheral interrupts - specifically Timer 1 and ADC
@@ -71,6 +75,8 @@ void main(void)
         DisplayMain();
         CanMain();
         CanThisMain();
-        ManageMain();
+        RestMain(); //Be careful of order: must be after can messages received by CountSet but before CountMain runs
+        CalCurrentMain();
+        CalChargeMain();
     }
 }

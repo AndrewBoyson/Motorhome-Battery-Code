@@ -6,11 +6,8 @@
 #include "eeprom-this.h"
 #include "count.h"
 
-#define BATTERY_CAPACITY_AH 280
-
 static uint32_t _capacityMilliAmpSeconds   = 0; //280Ah is 280 * 1000 * 3600 == 3C14 DC00. Could hold up to 1193Ah
 static uint32_t _milliAmpSeconds           = 0; //
-static uint8_t  _lastSavedSoc0to255        = 0; //Used to save count across resets. Updated in CountMain
 static  int16_t _currentOffsetMa           = 0;
 
 static uint16_t _positivePulses   = 0;
@@ -31,6 +28,7 @@ void CountInit()
     _milliAmpSeconds         = (uint32_t)_lastSavedSoc << 16;
     _positivePulses          = _lastSavedPos;
     _negativePulses          = _lastSavedNeg;
+    
 }
 
 int16_t CountGetCurrentOffsetMa()           { return _currentOffsetMa;}

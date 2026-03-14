@@ -32,5 +32,7 @@ extern uint16_t CountGetNegPulses(void);
 extern void     CountIncNegPulses(void);
 extern void     CountResNegPulses(void);
 
-extern void CountInit(void);
-extern void CountMain(void);
+extern void     CountInit(void);
+extern void     CountMain(void);
+
+#define BATTERY_CAPACITY_AH 280

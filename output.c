@@ -10,7 +10,8 @@
 #include "temperature.h"
 #include "eeprom-this.h"
 #include "voltage.h"
-#include "manage.h"
+#include "rest.h"
+#include "cal-charge.h"
 
 #define CHARGE     LATBbits.LB5
 #define SUPPLY_OFF LATCbits.LC7
@@ -111,9 +112,9 @@ void OutputMain()
     }
     else if (_targetMode == OUTPUT_TARGET_MODE_VOLTAGE)
     {
-        int16_t            targetBatMv = _targetMv * 4;                    //3300
-        int16_t validVoltageSlopeBatMv = ManageGetValidInflectionMv() * 4; //This is the width over which the capacity can be calibrated in manage.c == 15 * 4 mV
-        int16_t           reboundbatMv = _reboundMv * 4;                   //This must be smaller than VALID_VOLTAGE_SLOPE_MV or the state won't stay in neutral
+        int16_t            targetBatMv = _targetMv * 4;                       //3300
+        int16_t validVoltageSlopeBatMv = CalChargeGetValidInflectionMv() * 4; //This is the width over which the capacity can be calibrated in manage.c == 15 * 4 mV
+        int16_t           reboundbatMv = _reboundMv * 4;                      //This must be smaller than VALID_VOLTAGE_SLOPE_MV or the state won't stay in neutral
 
         switch (_state)
         {
