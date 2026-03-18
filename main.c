@@ -37,6 +37,10 @@ void __interrupt() isr(void)
     {
         AdcHandleInterrupt();
     }
+    if (PulseHadInterrupt())
+    {
+        PulseHandleInterrupt();
+    }
 }
 
 void main(void)

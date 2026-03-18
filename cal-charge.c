@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <limits.h>
 
 #include "../eeprom.h"
 
@@ -48,12 +49,12 @@ static char inflexionAsFromMv(int16_t batteryMv, uint32_t* pAs) //returns 0 if o
 
 int32_t  CalChargeGetDifferenceMas(         ) {return  _differenceMilliAmpSeconds; }
 int16_t CalChargeGetPulseAdjustMas(         ) {return _pulseAdjustMilliAmpSeconds; }
-void    CalChargeSetPulseAdjustMas(int16_t v) {       _pulseAdjustMilliAmpSeconds = v; EepromSaveS16(EEPROM_MANAGE_PULSE_ADJUST_MAS_S16, v); }
+void    CalChargeSetPulseAdjustMas(int16_t v) {       _pulseAdjustMilliAmpSeconds = v; EepromSaveS16(EEPROM_CAL_PULSE_ADJUST_MAS_S16, v); }
 
 void CalChargeInit()
 {
-     _differenceMilliAmpSeconds = (int32_t)EepromReadS16(EEPROM_MANAGE_DIFFERENCE_MAS_S16) << 16;
-    _pulseAdjustMilliAmpSeconds =          EepromReadS16(EEPROM_MANAGE_PULSE_ADJUST_MAS_S16);
+     _differenceMilliAmpSeconds = (int32_t)EepromReadS16(EEPROM_CAL_DIFFERENCE_MAS_S16) << 16;
+    _pulseAdjustMilliAmpSeconds =          EepromReadS16(EEPROM_CAL_PULSE_ADJUST_MAS_S16);
 }
 void CalChargeMain()
 {
@@ -77,7 +78,19 @@ void CalChargeMain()
     {
         //Save difference
         _differenceMilliAmpSeconds = (int32_t)(calculatedMilliAmpSeconds - countedMilliAmpSeconds);
-        EepromSaveS16(EEPROM_MANAGE_DIFFERENCE_MAS_S16, (int16_t)(_differenceMilliAmpSeconds >> 16));
+        EepromSaveS16(EEPROM_CAL_DIFFERENCE_MAS_S16, (int16_t)(_differenceMilliAmpSeconds >> 16));
+        
+        //Calculate new pulse adjust
+        int32_t pulseCount = CountGetPosPulses() + CountGetNegPulses();
+        if (pulseCount) //Don't divide by zero - undefined behaviour!
+        {
+            int32_t newPulseAdjustMilliAmpSeconds = _differenceMilliAmpSeconds / pulseCount;
+            if (newPulseAdjustMilliAmpSeconds > INT_MAX) newPulseAdjustMilliAmpSeconds = INT_MAX;
+            if (newPulseAdjustMilliAmpSeconds < INT_MIN) newPulseAdjustMilliAmpSeconds = INT_MIN;
+            CalChargeSetPulseAdjustMas((int16_t)newPulseAdjustMilliAmpSeconds);
+        }
+        
+        //Only do this once per cycle
         _oneShot = 1;
     }
     

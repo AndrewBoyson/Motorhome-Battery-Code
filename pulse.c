@@ -57,11 +57,29 @@ int32_t PulseGetCurrentMa()
     if (PulsePolarity) return  (int32_t)ma;
     else               return -(int32_t)ma;
 }
-
+static int8_t _uncountedInterrupts = 0;
+char PulseHadInterrupt()
+{
+    return INT0IF;
+}
+void PulseHandleInterrupt()
+{
+    if (POL)
+    {
+        if (_uncountedInterrupts < 127) _uncountedInterrupts++;
+    }
+    else
+    {
+        if (_uncountedInterrupts > -128) _uncountedInterrupts--;
+    }
+    
+    INT0IF = 0;          //Clear the interrupt bit
+}
 void PulseInit()
 {
     INTEDG0 = 0; //Interrupt on falling edge
     INT0IF = 0;  //Happens after 3 seconds so all spurious pulses are long gone
+    INT0IE = 1;  //Enable interrupt
 }
 uint32_t PulseGetMsSinceLastPulse()
 {
@@ -70,12 +88,51 @@ uint32_t PulseGetMsSinceLastPulse()
 
 void PulseMain()
 {
+    /*
     PulsePolarityInst = POL;
         
     if (INT0IF)
     {
         INT0IF = 0;
         PulsePolarity = POL;
+        uint32_t lastPulseMs = PulseMsCount;
+        PulseMsCount = MsTimerCount;
+        if (lastPulseMs) PulseInterval = PulseMsCount - lastPulseMs;
+        
+        if (PulsePolarity)
+        {
+            CountAddMilliAmpSeconds(MA_SECONDS_PER_PULSE);
+            CountIncPosPulses();
+        }
+        else
+        {
+            CountSubMilliAmpSeconds(MA_SECONDS_PER_PULSE);
+            CountIncNegPulses();
+        }
+    }
+     */
+    
+    PulsePolarityInst = POL;
+    
+    char hadPulse = 0;
+    di();
+        if (_uncountedInterrupts > 0)
+        {
+            hadPulse = 1;
+            PulsePolarity = 1;
+            _uncountedInterrupts--;
+        }
+        if (_uncountedInterrupts < 0)
+        {
+            hadPulse = 1;
+            PulsePolarity = 0;
+            _uncountedInterrupts++;
+        }
+    ei();
+    
+        
+    if (hadPulse)
+    {
         uint32_t lastPulseMs = PulseMsCount;
         PulseMsCount = MsTimerCount;
         if (lastPulseMs) PulseInterval = PulseMsCount - lastPulseMs;

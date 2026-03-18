@@ -3,7 +3,8 @@
 
 #include "../mstimer.h"
 
-#define OVERSAMPLE_RATE 14
+//#define OVERSAMPLE_RATE 14
+#define OVERSAMPLE_RATE 16
 
 uint16_t _value = 0;
 char     AdcValueIsValid = 0;
@@ -24,16 +25,14 @@ char AdcHadInterrupt()
 void AdcHandleInterrupt()
 {
     static uint32_t total = 0;
-    static uint16_t count = 0;
+    static uint32_t count = 0;
     
     uint16_t value = ((uint16_t)ADRESH << 8) + ADRESL;
-    total += value;    //Will contain 12 bit value * 4096 ==> 24 bit value
+    total += value;    //Will contain 12 bit value * OVERSAMPLE_RATE ==> 28 bit value
     count++;
-//    if (count >= 4096)
-    if (count >= (1 << OVERSAMPLE_RATE))
+    if (count >= (1UL << OVERSAMPLE_RATE))
     {
         count = 0;
-//        _value = (uint16_t)(total >> 8); //Decimate to 16 bits
         _value = (uint16_t)(total >> (12 + OVERSAMPLE_RATE - 16)); //Decimate to 16 bits
         AdcValueIsValid = 1;
         total = 0;
@@ -55,8 +54,8 @@ void AdcInit(void)
 	ANCON0            = 0;
 	ANCON0bits.ANSEL4 = 0;//AN4 configured as digital
 	ANCON0bits.ANSEL3 = 0;//AN3 configured as digital
-	ANCON0bits.ANSEL2 = 1;//AN2 configured as analogue
-	ANCON0bits.ANSEL1 = 1;//AN1 configured as analogue
+	ANCON0bits.ANSEL2 = 1;//AN2 configured as analogue -> -ve input
+	ANCON0bits.ANSEL1 = 1;//AN1 configured as analogue -> +ve input
 	ANCON0bits.ANSEL0 = 0;//AN0 configured as digital
     ANCON1            = 0;//AN8-14 configured as digital
 			
