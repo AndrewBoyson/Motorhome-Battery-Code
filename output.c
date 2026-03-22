@@ -12,6 +12,7 @@
 #include "voltage.h"
 #include "rest.h"
 #include "cal-charge.h"
+#include "curve.h"
 
 #define CHARGE     LATBbits.LB5
 #define SUPPLY_OFF LATCbits.LC7
@@ -30,7 +31,6 @@ static char    _chargeEnabled    = 0;
 static char    _dischargeEnabled = 0;
 static char    _targetMode       = 0;
 static uint8_t _targetSoc        = 0;
-static int16_t _targetMv         = 0;
 static int8_t  _reboundMv        = 0;
 
 char OutputGetState()
@@ -57,7 +57,6 @@ char    OutputGetChargeEnabled   () { return _chargeEnabled;    } void OutputSet
 char    OutputGetDischargeEnabled() { return _dischargeEnabled; } void OutputSetDischargeEnabled(char    v) { _dischargeEnabled = v; saveEnables(); }
 char    OutputGetTargetMode      () { return _targetMode;       } void OutputSetTargetMode      (char    v) { _targetMode       = v; EepromSaveChar(EEPROM_OUTPUT_TARGET_MODE_CHAR, _targetMode); }
 uint8_t OutputGetTargetSoc       () { return _targetSoc;        } void OutputSetTargetSoc       (uint8_t v) { _targetSoc        = v; EepromSaveU8  (EEPROM_OUTPUT_TARGET_SOC_U8   , _targetSoc ); } 
-int16_t OutputGetTargetMv        () { return _targetMv;         } void OutputSetTargetMv        (int16_t v) { _targetMv         = v; EepromSaveS16 (EEPROM_OUTPUT_TARGET_MV_S16   , _targetMv  ); } 
 int8_t  OutputGetReboundMv       () { return _reboundMv;        } void OutputSetReboundMv       (int8_t  v) { _reboundMv        = v; EepromSaveS8  (EEPROM_OUTPUT_REBOUND_MV_S8   , _reboundMv ); } 
 
 void OutputInit()
@@ -75,7 +74,6 @@ void OutputInit()
     _dischargeEnabled = byte & 1;
     _targetMode = EepromReadChar(EEPROM_OUTPUT_TARGET_MODE_CHAR);
     _targetSoc  = EepromReadU8  (EEPROM_OUTPUT_TARGET_SOC_U8);
-    _targetMv   = EepromReadS16 (EEPROM_OUTPUT_TARGET_MV_S16);
     _reboundMv  = EepromReadS8  (EEPROM_OUTPUT_REBOUND_MV_S8);
 }
 
@@ -112,9 +110,9 @@ void OutputMain()
     }
     else if (_targetMode == OUTPUT_TARGET_MODE_VOLTAGE)
     {
-        int16_t            targetBatMv = _targetMv * 4;                       //3300
-        int16_t validVoltageSlopeBatMv = CalChargeGetValidInflectionMv() * 4; //This is the width over which the capacity can be calibrated in manage.c == 15 * 4 mV
-        int16_t           reboundbatMv = _reboundMv * 4;                      //This must be smaller than VALID_VOLTAGE_SLOPE_MV or the state won't stay in neutral
+        int16_t            targetBatMv = CurveGetInflexionCentreMv() * 4; //3300
+        int16_t validVoltageSlopeBatMv = CurveGetInflexionWidthMv()  * 4; //This is the mv width over which the capacity can be calibrated in curve.c == 15 * 4 mV
+        int16_t           reboundbatMv = _reboundMv                  * 4; //This must be smaller than validVoltageSlopeBatMv or the state won't stay in neutral
 
         switch (_state)
         {

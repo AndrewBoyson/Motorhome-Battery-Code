@@ -22,6 +22,7 @@
 #include "rest.h"
 #include "cal-current.h"
 #include "cal-charge.h"
+#include "curve.h"
 
 #define _XTAL_FREQ 8000000
 
@@ -62,6 +63,7 @@ void main(void)
     RestInit();
     CalCurrentInit();
     CalChargeInit();
+    CurveInit();
     
     ei();
     PEIE = 1; //Enable peripheral interrupts - specifically Timer 1 and ADC

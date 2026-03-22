@@ -3,6 +3,7 @@
 extern void     RestMain(void);
 extern void     RestInit(void);
 extern uint32_t RestGetMsAtRest(void);
+extern char     RestGetIsAtRest(void);
 extern uint16_t RestGetCurrentSettleTimeMins(void);
 extern void     RestSetCurrentSettleTimeMins(uint16_t);
 extern uint16_t RestGetVoltageSettleTimeMins(void);

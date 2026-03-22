@@ -12,7 +12,9 @@
 #define MAX_REST_TIMER_MS 10UL * 24 * 3600 * 1000
 
 static uint32_t _msTimerRest = 0;
+static char     _isAtRest    = 0;
 uint32_t RestGetMsAtRest() { return MsTimerCount - _msTimerRest; }
+char     RestGetIsAtRest() { return _isAtRest; }
 
 static uint16_t _currentSettleTimeMins = 0;
 static uint32_t _currentSettleTimeMs   = 0;
@@ -44,8 +46,8 @@ void RestInit()
 
 void RestMain()
 {   
-    char isAtRest = OutputGetState() == 'N' && PulseGetCurrentMa() > -100;
-    if (isAtRest)
+    _isAtRest = OutputGetState() == 'N' && PulseGetCurrentMa() > -100;
+    if (_isAtRest)
     {
         if (MsTimerCount > _msTimerRest + MAX_REST_TIMER_MS) _msTimerRest = MsTimerCount - MAX_REST_TIMER_MS; //Limit the rest timer to 10 days
         uint16_t restTime16bit = (uint16_t)((MsTimerCount - _msTimerRest) >> 16);                             //Approximate minutes using ms * 65536

@@ -6,12 +6,17 @@
 #include "count.h"
 
 #define ZERO_CURRENT_REPEAT_TIME 1UL*60*60*1000
+static char    _isActive = 0;
+
+char    CalCurrentGetIsActive      (         ) { return _isActive; }
+
 void CalCurrentInit()
 {
 
 }
 void CalCurrentMain()
 {
+    _isActive = 0;
     char stable = RestGetCurrentIsStable();
     static uint32_t _msTimerRepeat = 0;
     if (!stable)
@@ -19,6 +24,7 @@ void CalCurrentMain()
         _msTimerRepeat = MsTimerCount - ZERO_CURRENT_REPEAT_TIME; //This allows it to start immediately when next run
         return;
     }
+    _isActive = 1;
     if (!MsTimerRepetitive(&_msTimerRepeat,   ZERO_CURRENT_REPEAT_TIME)) return;
     
     int32_t currentMa = PulseGetCurrentMa();       //Say  12mA

@@ -11,6 +11,8 @@
 #include "voltage.h"
 #include "rest.h"
 #include "cal-charge.h"
+#include "cal-current.h"
+#include "curve.h"
 
 #define BASE_MS 1000
 
@@ -29,7 +31,8 @@ static void receive(uint16_t id, uint8_t length, void* pData)
         case CAN_ID_BATTERY + CAN_ID_HEATER_PROPORTIONAL:     HeaterSetKp8bfdp              (*(uint16_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_HEATER_INTEGRAL:         HeaterSetKi8bfdp              (*(uint16_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_OUTPUT_TARGET_MODE:      OutputSetTargetMode           (*(    char*)pData); break;
-        case CAN_ID_BATTERY + CAN_ID_OUTPUT_TARGET_MV:        OutputSetTargetMv             (*( int16_t*)pData); break;
+        case CAN_ID_BATTERY + CAN_ID_CURVE_INFLEXION_MV:      CurveSetInflexionCentreMv     (*( int16_t*)pData); break;
+        case CAN_ID_BATTERY + CAN_ID_CURVE_INFLEXION_PERCENT: CurveSetInflexionCentrePercent(*( uint8_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_CURRENT_SETTLE_MINS:     RestSetCurrentSettleTimeMins  (*(uint16_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_VOLTAGE_SETTLE_MINS:     RestSetVoltageSettleTimeMins  (*(uint16_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_VOLTAGE_REBOUND_MV:      OutputSetReboundMv            (*(  int8_t*)pData); break;
@@ -48,6 +51,9 @@ void CanThisMain(void)
     { uint16_t value = CountGetPosPulses             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNT_POS_PULSES       , sizeof(value), &value); }
     { uint16_t value = CountGetNegPulses             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNT_NEG_PULSES       , sizeof(value), &value); }
     {  int32_t value = PulseGetCurrentMa             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MA                     , sizeof(value), &value); }
+    {     char value = CalChargeGetIsActive          (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CAL_CHARGE_IS_ACTIVE   , sizeof(value), &value); }
+    {     char value = CalCurrentGetIsActive         (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CAL_CURRENT_IS_ACTIVE  , sizeof(value), &value); }
+    {     char value = RestGetIsAtRest               (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_IS_AT_REST             , sizeof(value), &value); }
     
     {  uint8_t value = OutputGetTargetSoc            (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_OUTPUT_TARGET_SOC      , sizeof(value), &value); }
     {     char value = OutputGetState                (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_OUTPUT_STATE           , sizeof(value), &value); }
@@ -64,7 +70,8 @@ void CanThisMain(void)
     {  int16_t value = CountGetCurrentOffsetMa       (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CURRENT_OFFSET_MA      , sizeof(value), &value); }
     
     {     char value = OutputGetTargetMode           (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_OUTPUT_TARGET_MODE     , sizeof(value), &value); }
-    {  int16_t value = OutputGetTargetMv             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_OUTPUT_TARGET_MV       , sizeof(value), &value); }
+    {  int16_t value = CurveGetInflexionCentreMv     (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CURVE_INFLEXION_MV     , sizeof(value), &value); }
+    {  uint8_t value = CurveGetInflexionCentrePercent(); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CURVE_INFLEXION_PERCENT, sizeof(value), &value); }
     { uint32_t value = RestGetMsAtRest               (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MS_AT_REST             , sizeof(value), &value); }
     { uint16_t value = RestGetCurrentSettleTimeMins  (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CURRENT_SETTLE_MINS    , sizeof(value), &value); }
     { uint16_t value = RestGetVoltageSettleTimeMins  (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_VOLTAGE_SETTLE_MINS    , sizeof(value), &value); }
