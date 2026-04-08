@@ -39,6 +39,8 @@ static uint8_t _displayOnTime  = 0;
 static  int8_t _page           = 1; //0 == lcd off
 static  int8_t _setting        = 0; //0 == display page
 
+static char _outputTargetMode = 0; //Displayed in outputdisplay3, adjusted and set by adjust and reset whenever not displaying outputdisplay3
+
 void DisplayInit()
 {
     _displayOnTime = EepromReadU8(EEPROM_DISPLAY_ON_TIME_U8);
@@ -263,6 +265,18 @@ static void displayOutput2()
     if (OutputGetChargeEnabled   ()) strcpy(line1+3, "C+ ");
     else                             strcpy(line1+3, "C- ");
 }
+static void displayOutput3()
+{
+    int32_t ma = PulseGetCurrentMa();
+    strcpy(line0, "Mode?   ");
+    addCurrent(line0 + 8, ma);
+    *(line0+14) = ' ';
+    *(line0+15) = OutputGetState();
+    
+    strcpy(line1, "x -> y");
+    *(line1+0) = OutputGetTargetMode();
+    *(line1+5) = _outputTargetMode;
+}
 static void displayHeater0()
 {
     char* p = line0;
@@ -379,6 +393,12 @@ static void adjustSetting(char increase, uint16_t amount)
                     else          OutputSetDischargeEnabled(!OutputGetDischargeEnabled());
                     break;
                 }
+                case 3:
+                {
+                    if (increase) _outputTargetMode = OutputGetTargetModeNext(_outputTargetMode);
+                    else          OutputSetTargetMode(_outputTargetMode);
+                    break;
+                }
             }
             break;
         case PAGE_HEATER:
@@ -492,7 +512,7 @@ void DisplayMain()
                         case PAGE_HOME        : if (_setting > 4) _setting = 0; break;
                         case PAGE_CURRENT     : if (_setting > 0) _setting = 0; break;
                         case PAGE_SOC_COUNTED : if (_setting > 2) _setting = 0; break;
-                        case PAGE_OUTPUT      : if (_setting > 2) _setting = 0; break;
+                        case PAGE_OUTPUT      : if (_setting > 3) _setting = 0; break;
                         case PAGE_HEATER      : if (_setting > 3) _setting = 0; break;
                     }
                 }
@@ -544,9 +564,10 @@ void DisplayMain()
             {
                 switch (_setting)
                 {
-                    case 0: displayOutput0(); break;
-                    case 1: displayOutput1(); break;
-                    case 2: displayOutput2(); break;
+                    case 0: displayOutput0(); _outputTargetMode = OutputGetTargetMode(); break;
+                    case 1: displayOutput1(); _outputTargetMode = OutputGetTargetMode(); break;
+                    case 2: displayOutput2(); _outputTargetMode = OutputGetTargetMode(); break;
+                    case 3: displayOutput3();                                            break;
                 }
                 break;
             }

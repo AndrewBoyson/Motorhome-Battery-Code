@@ -7,8 +7,11 @@ extern int16_t OutputGetTargetMv        (void); extern void OutputSetTargetMv   
 extern int8_t  OutputGetReboundMv       (void); extern void OutputSetReboundMv       (int8_t );
 extern char    OutputGetTargetMode      (void); extern void OutputSetTargetMode      (char   );
 
+extern char OutputGetTargetModeNext  (char);
+
 extern void OutputInit(void);
 extern void OutputMain(void);
 
-#define OUTPUT_TARGET_MODE_VOLTAGE 0 //Home
-#define OUTPUT_TARGET_MODE_SOC     1 //Away
+#define OUTPUT_TARGET_MODE_VOLTAGE 'M' //Mid or Home
+#define OUTPUT_TARGET_MODE_SOC     'C' //SoC or Away
+#define OUTPUT_TARGET_MODE_NONE    'N' //None or Neutral

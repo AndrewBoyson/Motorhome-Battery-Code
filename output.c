@@ -59,6 +59,17 @@ char    OutputGetTargetMode      () { return _targetMode;       } void OutputSet
 uint8_t OutputGetTargetSoc       () { return _targetSoc;        } void OutputSetTargetSoc       (uint8_t v) { _targetSoc        = v; EepromSaveU8  (EEPROM_OUTPUT_TARGET_SOC_U8   , _targetSoc ); } 
 int8_t  OutputGetReboundMv       () { return _reboundMv;        } void OutputSetReboundMv       (int8_t  v) { _reboundMv        = v; EepromSaveS8  (EEPROM_OUTPUT_REBOUND_MV_S8   , _reboundMv ); } 
 
+char    OutputGetTargetModeNext  (char targetMode) //Used by display
+{
+    switch (targetMode)
+    {
+        case OUTPUT_TARGET_MODE_NONE:    return OUTPUT_TARGET_MODE_VOLTAGE;
+        case OUTPUT_TARGET_MODE_VOLTAGE: return OUTPUT_TARGET_MODE_SOC;
+        case OUTPUT_TARGET_MODE_SOC:     return OUTPUT_TARGET_MODE_NONE;
+        default:                         return OUTPUT_TARGET_MODE_NONE;
+    }
+}
+
 void OutputInit()
 {
     TRISB5 = 0;	//RB5 (pin 26) output  CHARGE
@@ -73,6 +84,7 @@ void OutputInit()
     _chargeEnabled    = byte & 2;
     _dischargeEnabled = byte & 1;
     _targetMode = EepromReadChar(EEPROM_OUTPUT_TARGET_MODE_CHAR);
+    if (_targetMode != OUTPUT_TARGET_MODE_NONE && _targetMode != OUTPUT_TARGET_MODE_VOLTAGE &&_targetMode != OUTPUT_TARGET_MODE_SOC) _targetMode = OUTPUT_TARGET_MODE_NONE;
     _targetSoc  = EepromReadU8  (EEPROM_OUTPUT_TARGET_SOC_U8);
     _reboundMv  = EepromReadS8  (EEPROM_OUTPUT_REBOUND_MV_S8);
 }
