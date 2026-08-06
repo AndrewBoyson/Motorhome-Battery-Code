@@ -49,7 +49,7 @@ void RestMain()
     _isAtRest = OutputGetState() == 'N' && PulseGetCurrentMa() > -100;
     if (_isAtRest)
     {
-        if (MsTimerCount > _msTimerRest + MAX_REST_TIMER_MS) _msTimerRest = MsTimerCount - MAX_REST_TIMER_MS; //Limit the rest timer to 10 days
+        if (MsTimerCount - _msTimerRest > MAX_REST_TIMER_MS) _msTimerRest = MsTimerCount - MAX_REST_TIMER_MS; //Limit the rest timer to 10 days
         uint16_t restTime16bit = (uint16_t)((MsTimerCount - _msTimerRest) >> 16);                             //Approximate minutes using ms * 65536
         if ((restTime16bit & 0xF) == 0) EepromSaveU16(EEPROM_REST_TIMER_MINUTES_U16, restTime16bit);   //Save time about every 16 minutes
         _currentIsStable = MsTimerRelative(_msTimerRest, _currentSettleTimeMs);
