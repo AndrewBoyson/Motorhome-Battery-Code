@@ -12,6 +12,7 @@
 #include "rest.h"
 #include "cal-charge.h"
 #include "cal-current.h"
+#include "cal-pulse.h"
 #include "curve.h"
 
 #define BASE_MS 1000
@@ -22,7 +23,7 @@ static void receive(uint16_t id, uint8_t length, void* pData)
     {
         case CAN_ID_SERVER  + CAN_ID_TIME:                    MsTickerRegulate              (*(uint32_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_COUNTED_AMP_SECONDS:     CountSetAmpSeconds            (*(uint32_t*)pData); break;
-        case CAN_ID_BATTERY + CAN_ID_MANAGE_PULSE_ADJUST_MAS: CalChargeSetPulseAdjustMas    (*( int16_t*)pData); break;
+        case CAN_ID_BATTERY + CAN_ID_MANAGE_PULSE_ADJUST_MAS: CalPulseSetAdjustMas    (*( int16_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_OUTPUT_TARGET_SOC:       OutputSetTargetSoc            (*( uint8_t*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_CHARGE_ENABLED:          OutputSetChargeEnabled        (*(    char*)pData); break;
         case CAN_ID_BATTERY + CAN_ID_DISCHARGE_ENABLED:       OutputSetDischargeEnabled     (*(    char*)pData); break;
@@ -46,10 +47,10 @@ void CanThisInit(void)
 void CanThisMain(void)
 {
     { uint32_t value = CountGetAmpSeconds            (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNTED_AMP_SECONDS    , sizeof(value), &value); }
-    {  int32_t value = CalChargeGetDifferenceMas     (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MANAGE_DIFFERENCE_MAS  , sizeof(value), &value); }
-    {  int16_t value = CalChargeGetPulseAdjustMas    (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MANAGE_PULSE_ADJUST_MAS, sizeof(value), &value); }
-    { uint16_t value = CountGetPosPulses             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNT_POS_PULSES       , sizeof(value), &value); }
-    { uint16_t value = CountGetNegPulses             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_COUNT_NEG_PULSES       , sizeof(value), &value); }
+    {  int32_t value = CalPulseGetDifferenceMas      (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MANAGE_DIFFERENCE_MAS  , sizeof(value), &value); }
+    {  int16_t value = CalPulseGetAdjustMas          (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MANAGE_PULSE_ADJUST_MAS, sizeof(value), &value); }
+    { uint16_t value = CalPulseGetPosPulses          (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CAL_PULSE_POS_PULSES   , sizeof(value), &value); }
+    { uint16_t value = CalPulseGetNegPulses          (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CAL_PULSE_NEG_PULSES   , sizeof(value), &value); }
     {  int32_t value = PulseGetCurrentMa             (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_MA                     , sizeof(value), &value); }
     {     char value = CalChargeGetIsActive          (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CAL_CHARGE_IS_ACTIVE   , sizeof(value), &value); }
     {     char value = CalCurrentGetIsActive         (); static struct CanTransmitState state; CanTransmitOnChange(&state, CAN_ID_BATTERY, CAN_ID_CAL_CURRENT_IS_ACTIVE  , sizeof(value), &value); }

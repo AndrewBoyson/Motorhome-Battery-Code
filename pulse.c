@@ -8,6 +8,7 @@
 #include "voltage.h"
 #include "keypad.h"
 #include "count.h"
+#include "cal-pulse.h"
 
 #define POL  PORTAbits.RA0
 
@@ -87,31 +88,7 @@ uint32_t PulseGetMsSinceLastPulse()
 }
 
 void PulseMain()
-{
-    /*
-    PulsePolarityInst = POL;
-        
-    if (INT0IF)
-    {
-        INT0IF = 0;
-        PulsePolarity = POL;
-        uint32_t lastPulseMs = PulseMsCount;
-        PulseMsCount = MsTimerCount;
-        if (lastPulseMs) PulseInterval = PulseMsCount - lastPulseMs;
-        
-        if (PulsePolarity)
-        {
-            CountAddMilliAmpSeconds(MA_SECONDS_PER_PULSE);
-            CountIncPosPulses();
-        }
-        else
-        {
-            CountSubMilliAmpSeconds(MA_SECONDS_PER_PULSE);
-            CountIncNegPulses();
-        }
-    }
-     */
-    
+{    
     PulsePolarityInst = POL;
     
     char hadPulse = 0;
@@ -140,12 +117,17 @@ void PulseMain()
         if (PulsePolarity)
         {
             CountAddMilliAmpSeconds(MA_SECONDS_PER_PULSE);
-            CountIncPosPulses();
+            CalPulseIncPosPulses();
         }
         else
         {
             CountSubMilliAmpSeconds(MA_SECONDS_PER_PULSE);
-            CountIncNegPulses();
+            CalPulseIncNegPulses();
         }
+        
+        //Add the adjustment per pulse; note that the pulse direction is irrelevant
+        int16_t adjustMasPerPulse = CalPulseGetAdjustMas();
+        if (adjustMasPerPulse > 0) CountAddMilliAmpSeconds((uint16_t) adjustMasPerPulse);
+        if (adjustMasPerPulse < 0) CountSubMilliAmpSeconds((uint16_t)-adjustMasPerPulse);
     }
 }

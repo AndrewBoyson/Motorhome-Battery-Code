@@ -42,6 +42,9 @@ void RestInit()
     _currentSettleTimeMs = _currentSettleTimeMins * 60UL * 1000;
     _voltageSettleTimeMins = EepromReadU16(EEPROM_REST_VOLTAGE_SETTLE_TIME_MINS_U16) ;
     _voltageSettleTimeMs = _voltageSettleTimeMins * 60UL * 1000;
+    
+    _currentIsStable = MsTimerRelative(_msTimerRest, _currentSettleTimeMs);
+    _voltageIsStable = MsTimerRelative(_msTimerRest, _voltageSettleTimeMs);
 }
 
 void RestMain()
@@ -51,14 +54,14 @@ void RestMain()
     {
         if (MsTimerCount - _msTimerRest > MAX_REST_TIMER_MS) _msTimerRest = MsTimerCount - MAX_REST_TIMER_MS; //Limit the rest timer to 10 days
         uint16_t restTime16bit = (uint16_t)((MsTimerCount - _msTimerRest) >> 16);                             //Approximate minutes using ms * 65536
-        if ((restTime16bit & 0xF) == 0) EepromSaveU16(EEPROM_REST_TIMER_MINUTES_U16, restTime16bit);   //Save time about every 16 minutes
+        if ((restTime16bit & 0xF) == 0) EepromSaveU16(EEPROM_REST_TIMER_MINUTES_U16, restTime16bit);          //Save time about every 16 minutes
         _currentIsStable = MsTimerRelative(_msTimerRest, _currentSettleTimeMs);
         _voltageIsStable = MsTimerRelative(_msTimerRest, _voltageSettleTimeMs);
     }
     else
     {
         _msTimerRest = MsTimerCount;                                                                           //Set rest time to zero
-        EepromSaveU16(EEPROM_REST_TIMER_MINUTES_U16, 0);                                                //Save time - eeprom save checks the current value (no wear) and only actually saves if different
+        EepromSaveU16(EEPROM_REST_TIMER_MINUTES_U16, 0);                                                       //Save time - eeprom save checks the current value (no wear) and only actually saves if different
         _currentIsStable = 0;
         _voltageIsStable = 0;                                                                                                
     }
